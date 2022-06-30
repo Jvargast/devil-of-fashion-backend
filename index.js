@@ -5,9 +5,8 @@ const cors = require('cors')
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const dotenv = require("dotenv");
-const userRoutes = require("./src/routes/user");
 const connectDatabase = require("./src/config/database");
-const errorMiddleware = require("./src/middleware/error")
+const errorMiddleware = require("./src/middleware/error");
 
 dotenv.config();
 
@@ -25,14 +24,15 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(express.json());
 
-app.use("/api/user", userRoutes);
-
-//app.use(express.json());
 
 //Route Imports
 const product = require("./src/routes/productRoutes");
+const user = require("./src/routes/userRoutes");
+
 app.use("/api/v1", product);
+app.use("/api/v1", user);
 
 //Middleare for error
 app.use(errorMiddleware);
