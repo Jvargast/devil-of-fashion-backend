@@ -14,7 +14,7 @@ const productSchema = mongoose.Schema({
         type:Number,
         required: [true, "Ingresa el precio del producto"]
     },
-    rating:{
+    ratings:{
         type:Number,
         default:0
     },
@@ -44,6 +44,11 @@ const productSchema = mongoose.Schema({
     },
     reviews: [
         {
+            user:{
+                type: mongoose.Schema.ObjectId,
+                ref:"User",
+                required:true,
+            },
             name:{
                 type:String,
                 required:true
