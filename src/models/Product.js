@@ -32,6 +32,10 @@ const productSchema = mongoose.Schema({
         type:String,
         required:[true, "Ingresa categoría"]
     },
+    subCategory: {
+        type:String,
+        required:[true, "Ingresa sub categoría"]
+    },
     stock:{
         type:Number,
         required:[true, "Ingresa cantidad del producto"],
