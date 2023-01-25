@@ -2,11 +2,11 @@ const Product = require("../models/Product");
 const ErrorHandler = require("../utils/errorHandler");
 const catchAsyncError = require("../middleware/catchAsyncErrors");
 const ApiFeatures = require("../utils/apiFeatures");
+const Category = require("../models/Category");
 
 //Create product -- Admin
 exports.createProduct = catchAsyncError(async (req, res, next) => {
   req.body.user = req.user.id;
-
   const product = await Product.create(req.body);
 
   res.status(201).json({
@@ -17,18 +17,17 @@ exports.createProduct = catchAsyncError(async (req, res, next) => {
 
 // Get all products
 exports.getAllProducts = catchAsyncError(async (req, res, next) => {
-
   const resultPerPage = 9;
   const productsCount = await Product.countDocuments();
   const apifeature = new ApiFeatures(Product.find(), req.query)
     .search()
     .filter()
-    .pagination(resultPerPage); 
-    
- /*  let products = await apifeature.query;
+    .pagination(resultPerPage);
+
+  /*  let products = await apifeature.query;
     let filteredProductsCount = products.length;
     apifeature.pagination(resultPerPage); */
-  
+
   /* products = await apifeature.query;s */
   const products = await apifeature.query;
   res.status(200).json({
@@ -36,7 +35,77 @@ exports.getAllProducts = catchAsyncError(async (req, res, next) => {
     products,
     productsCount,
     resultPerPage,
+  });
+});
 
+exports.topProducts = catchAsyncError(async (req, res, next) => {
+  req.query.limit = 5;
+  req.query.sort = "price";
+  req.query.fields = "name, price, description, stock";
+  next();
+});
+
+exports.getProducts = catchAsyncError(async (req, res, next) => {
+  const queryObj = { ...req.query };
+  const excludeFields = ["page", "sort", "limit", "fields"];
+  excludeFields.forEach((el) => delete queryObj[el]);
+
+  //Advance filtering query
+  let queryStr = JSON.stringify(queryObj);
+  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, (match) => `$${match}`);
+
+  let query = Product.find(JSON.parse(queryStr));
+  let keyword;
+
+  //SORTING
+  if (req.query.sort) {
+    const sortBy = req.query.sort.split(",").join(" ");
+    query = query.sort(sortBy);
+  } else {
+    query = query.sort("-createdAt");
+  }
+
+  //SEARCH
+  if (req.query.keyword) {
+    keyword = {
+      name: {
+        $regex: req.query.keyword,
+        $options: "i",
+      },
+    };
+    query = query.find({ ...keyword });
+  } else {
+    keyword = {};
+  }
+
+  //FIELDS LIMITING
+  if (req.query.fields) {
+    const fields = req.query.fields.split(",").join(" ");
+    query = query.select(fields);
+  } else {
+    query = query.select("-__v");
+  }
+
+  //PAGINATION
+  //page=2&limit=3
+  const page = req.query.page * 1 || 1;
+  const limit = req.query.limit * 1 || 10;
+  const skip = (page - 1) * limit;
+
+  query = query.skip(skip).limit(limit);
+
+  if (req.query.page) {
+    const newProducts = await Product.countDocuments();
+    if (skip >= newProducts) throw new Error("This page doesnt exist");
+  }
+
+  const products = await query;
+
+  res.status(200).json({
+    success: true,
+    products,
+    productsCount: products.length,
+    resultPerPage:limit
   });
 });
 
@@ -76,7 +145,6 @@ exports.updateProduct = catchAsyncError(async (req, res, next) => {
     product,
   });
 });
-
 
 //Delete Product
 
@@ -171,7 +239,7 @@ exports.deleteReview = catchAsyncError(async (req, res, next) => {
 
   let ratings = 0;
 
-  if(reviews.length === 0) {
+  if (reviews.length === 0) {
     ratings = 0;
   } else {
     ratings = avg / reviews.length;

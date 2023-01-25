@@ -36,6 +36,10 @@ const productSchema = mongoose.Schema({
         type:String,
         required:[true, "Ingresa sub categoría"]
     },
+    hashtag: {
+        type: String,
+        
+    },
     stock:{
         type:Number,
         required:[true, "Ingresa cantidad del producto"],
@@ -74,7 +78,8 @@ const productSchema = mongoose.Schema({
     },
     createdAt: {
         type:Date,
-        default:Date.now
+        default:Date.now,
+        select:false
     }
 })
 
