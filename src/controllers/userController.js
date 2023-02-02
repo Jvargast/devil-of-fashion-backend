@@ -60,7 +60,7 @@ exports.forgotPassword = catchAsyncError(async(req,res,next) => {
 
 
     if(!user) {
-        return next(new ErrorHandler("User not found", 404));
+        return next(new ErrorHandler("El usuario no existe", 404));
     }
 
     //Get ResetPassword Token
@@ -70,7 +70,9 @@ exports.forgotPassword = catchAsyncError(async(req,res,next) => {
 
     const resetPasswordUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetToken}`;
 
-    const message  = `El link para cambiar contraseña es: \n\n ${resetPasswordUrl} \n\nSi no solicitaste un cambio de contraseña, por favor ignora este correo.`; 
+    /* const resetPasswordUrl = `${process.env.FRONT_URL}/password/reset/${resetToken}`; */
+    
+    const message  = `El enlace para cambiar contraseña es: \n\n ${resetPasswordUrl} \n\nSi no solicitaste un cambio de contraseña, por favor ignora este correo.`; 
 
     try {
         await sendEmail({
@@ -151,16 +153,14 @@ exports.updatePassword = catchAsyncError(async(req,res,next) => {
 
 //Update User profile
 exports.updateProfile = catchAsyncError(async(req,res,next) => {
-    
     const newUserData = {
         name:req.body.name,
         email:req.body.email,
     }
-
-    const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+    await User.findByIdAndUpdate(req.user.id, newUserData, {
         new:true,
         runValidators:true,
-        userFindAndModify: false
+        useFindAndModify: false
     });
 
     res.status(200).json({
