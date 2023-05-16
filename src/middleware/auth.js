@@ -6,7 +6,7 @@ const User = require("../models/User");
 exports.isAuthenticatedUser = catchAsyncError(async(req,res,next)=> {
     const {token} = req.cookies;
     if(!token) {
-        return next(new ErrorHandler("Please Login to access this resource", 403));
+        return next(new ErrorHandler("Por favor iniciar sesión para acceder a este recurso", 403));
     };
 
     const decodedDate = jwt.verify(token,process.env.JWT_SECRET);
